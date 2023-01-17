@@ -21,12 +21,12 @@ refs.searchFormEl.addEventListener('submit', async e => {
     const data = await pixabaiAPI.getPhotos(query);
     console.log(data.hits.length);
     console.log(data.totalHits);
-
     refs.galleryEl.insertAdjacentHTML('beforeend', makeMarkup(data.hits));
     let gallery = new SimpleLightbox('.gallery a');
     gallery.on('show.simplelightbox', function () {
         gallery.refresh();
     });
+   
 
     Notiflix.Notify.info(`Hooray! We found ${data.totalHits} images.`);
     refs.btnAddMoreEl.classList.remove('hidden');
@@ -38,7 +38,12 @@ refs.searchFormEl.addEventListener('submit', async e => {
       );
 
       refs.galleryEl.innerHTML = '';
+     
+    } else{
+       
+        refs.galleryEl.insertAdjacentHTML('beforeend', makeMarkup(data.hits));
     }
+    
   } catch (err) {
     console.log(err);
   }
@@ -67,23 +72,27 @@ function makeMarkup(photos) {
 <img width=300 height=200 src="${photo.webformatURL}" alt="${photo.tags}" loading="lazy"/>
 </a><div class="info">
           <p class="info-item">
-            <b>Likes:</b>
-           </p>
+          <b>Likes:</b> 
+        <b>${photo.likes}</b>
+            </p>
           <p class="info-item">
             <b>Views:</b>
+            <b> ${photo.views}</b>
           </p>
           <p class="info-item">
             <b>Comments:</b>
+            <b> ${photo.comments}</b>
           </p>
           <p class="info-item">
             <b>Downloads:</b>
+            <b> ${photo.downloads}</b>
           </p>
         </div>
         <div class="number-wrap">
-        <p>${photo.likes}</p>
-        <p> ${photo.views}</p>
-        <p> ${photo.comments}</p>
-        <p> ${photo.downloads}</p>
+       
+        
+        
+       
       </div>
       </div>`;
     })
