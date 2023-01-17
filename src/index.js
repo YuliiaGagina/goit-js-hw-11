@@ -1,39 +1,71 @@
 import axios from 'axios';
+import Notiflix from 'notiflix';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 console.log(axios);
 import { PixabaiAPI } from './fetchimages';
 const refs = {
-    searchFormEl: document.querySelector('.search-form'),
-    galleryEl: document.querySelector('.gallery'),
+  searchFormEl: document.querySelector('.search-form'),
+  galleryEl: document.querySelector('.gallery'),
+  btnAddMoreEl: document.querySelector('.load-more'),
+};
 
-}
+const pixabaiAPI = new PixabaiAPI();
 
-const pixabaiAPI = new PixabaiAPI;
+refs.searchFormEl.addEventListener('submit', async e => {
+  e.preventDefault();
+  const query = e.target.elements.searchQuery.value;
+  refs.galleryEl.innerHTML = '';
 
-refs.searchFormEl.addEventListener('submit', (e)=>{
-    e.preventDefault();
-    const query = e.target.elements.searchQuery.value;
+  try {
+    const data = await pixabaiAPI.getPhotos(query);
+    console.log(data.hits.length);
+    console.log(data.totalHits);
 
-    pixabaiAPI.getPhotos().then( data =>{
-        console.log(data.hits[0]);
-        // const {webformatURL, largeImageURL, tags,likes,views, comments, downloads} = hits;
-        refs.galleryEl.insertAdjacentHTML('beforeend', makeMarkup(data.hits));
-       
-        
+    refs.galleryEl.insertAdjacentHTML('beforeend', makeMarkup(data.hits));
+    let gallery = new SimpleLightbox('.gallery a');
+    gallery.on('show.simplelightbox', function () {
+        gallery.refresh();
+    });
 
-    }).catch(error =>{
-        console.log(error);
-    })
-    
+    Notiflix.Notify.info(`Hooray! We found ${data.totalHits} images.`);
+    refs.btnAddMoreEl.classList.remove('hidden');
 
+    if (data.hits.length === 0) {
+      refs.btnAddMoreEl.classList.add('hidden');
+      Notiflix.Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
 
-    e.target.reset();
+      refs.galleryEl.innerHTML = '';
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
+  e.target.reset();
 });
 
-function makeMarkup (photos){
-    const markup = photos.map(photo =>{
-        return `<div class="photo-card">
-        <img width=300 height=200 src="${photo.webformatURL}" alt="${photo.tags}" loading="lazy" />
-        <div class="info">
+refs.btnAddMoreEl.addEventListener('click', async e => {
+  const data = await pixabaiAPI.getPhotos();
+  pixabaiAPI.page += 1;
+  refs.galleryEl.insertAdjacentHTML('beforeend', makeMarkup(data.hits));
+
+  if (data.totalHits / pixabaiAPI.page < 40) {
+    refs.btnAddMoreEl.classList.add('hidden');
+    Notiflix.Notify.info(
+      "We're sorry, but you've reached the end of search results."
+    );
+  }
+});
+
+function makeMarkup(photos) {
+  const markup = photos
+    .map(photo => {
+      return `<div class="photo-card">
+        <a class="gallery__item" href="${photo.largeImageURL}">
+<img width=300 height=200 src="${photo.webformatURL}" alt="${photo.tags}" loading="lazy"/>
+</a><div class="info">
           <p class="info-item">
             <b>Likes:</b>
            </p>
@@ -53,10 +85,8 @@ function makeMarkup (photos){
         <p> ${photo.comments}</p>
         <p> ${photo.downloads}</p>
       </div>
-      </div>`
-    }).join('');
-    return markup;
-   
-};
-
-
+      </div>`;
+    })
+    .join('');
+  return markup;
+}

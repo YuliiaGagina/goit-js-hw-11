@@ -6,14 +6,14 @@ const BASE_URL = 'https://pixabay.com/api/';
 const KEY = '32895691-46e81bd7531541cc66e325b33';
 
  export class PixabaiAPI {
-   
-   getPhotos(query){
-    this.page = 1;
+    page = 1;
+    query = '';
+  async getPhotos(query){
+    
 
     if(query){
         this.query = query;
     }
-    
     const searchParams = {
         params: {
           key: KEY,
@@ -23,9 +23,12 @@ const KEY = '32895691-46e81bd7531541cc66e325b33';
           image_type: 'photo',
           orientation: 'horizontal',
           safesearch: true,
+          lang: 'ru',
+          
         },
       };
-      return axios.get(`${BASE_URL}`, searchParams).then(response=> response.data);
+      const {data} = await axios.get(`${BASE_URL}`, searchParams);
+      return data;
    }
 }
 
